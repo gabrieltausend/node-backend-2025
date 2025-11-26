@@ -1,212 +1,231 @@
-# AtendeAí — Fila de Ajuda em Sala
+# Site para AC Projetos e Construções
 
-> Organize a fila de atendimento em aulas práticas: menos espera, mais visibilidade e justiça.
+## 1) Problema
+- O cliente e o arquiteto, em ocasioões diferentes para cada, tem dificuldade em entrarem em contato um com o outro.
+- Isso causa conflitos entre cliente-servidor, na qual, muitas das vezes ambos tem dificuldade de entrarem em contato um com o outro por choques de agenda ou falta de atenção por parte de algum deles.
+- No início, o foco será em ajudar o cliente com o objetivo de facilitar seu contato com o arquiteto e auxiliar o arquiteto com seu trabalho.
 
-[![Node.js](https://img.shields.io/badge/node-%3E%3D16-green)](#) [![License](https://img.shields.io/badge/license-MIT-blue)](#)
+## 2) Atores e Decisores
+- Usuários principais: Cliente, Arquiteto;
+- Decisores/Apoiadores: Estagiário do Arquiteto.
 
-## Sumário
+## 3) Casos de uso (de forma simples) 
+- Cliente: Ver os trabalhos do Arquiteto, Entrar em contato com o Estagiário para tirar dúvidas ou pedir contato direto com o Arquiteto;
+- Arquiteto: Login, Manter Conectado, Manter (inserir, mostrar, editar, remover) trabalhos e projetos no repositório, Agendar e gerenciar reuniões;
+- Estagiário: Login, Manter conectado, Participar das reuniões do Arquiteto, Entrar em contato com o Cliente para responde-lo.
 
-1. [Visão rápida](#visão-rápida)
-2. [Problema e objetivo](#problema-e-objetivo)
-3. [Quem usa](#quem-usa)
-4. [Funcionalidades (MVP)](#funcionalidades-mvp)
-5. [Tecnologias](#tecnologias)
-6. [Modelo de dados](#modelo-de-dados)
-7. [Como rodar localmente](#como-rodar-localmente)
-8. [Endpoints principais](#endpoints-principais)
-9. [Comandos úteis / scripts npm](#comandos-úteis--scripts-npm)
-10. [Erros comuns & dicas](#erros-comuns--dicas)
-11. [Licença](#licença)
+## 4) Limites e suposições
+- Limites: Entrega final até o fim da disciplina (ex.: 30/11/2025), Rodar em navegadores de dispositivos móveis e computadores, Sem serviços pagos;
+- Suposições: Cadastro para contato, 10 min para teste rápido;
+- Plano B: Deixar o números de telefone e e-mail disponíveis para contato.
 
----
+## 5) Hipóteses + validação
+- Valor: Se o cliente entrar em contato com o estagiário, então ele consegue fechar negócio com mais facilidade junto do arquiteto.  
+- Validação (valor): Teste de contato entre Estagiári e Cliente; alvo: Chat de contato funcionar.
 
-## Visão rápida
+- Viabilidade: Caso do Arquiteto resolver lançar trabalhos e projetos ao repositório.  
+- Validação (viabilidade): Lançamento de imagens ao repositório; Meta: Ter ao menos 5 imagens de projetos ou trabalhos lançados no repositório do site.
 
-`AtendeAí` é uma API + protótipo para gerenciar uma fila de chamados em aulas práticas.
+## 6) Fluxo principal e primeira/segunda fatia
+**Fluxo principal:**  
+1) Cliente acessa o site
+2) Analisa o repositório
+3) Caso de dúvida entrar em contato com o Estagiário
+4) Utilizar a aba de contato para conversar e negociar com o Arquiteto.
+**Primeira fatia vertical:**  
+Inclui: Login simples, abrir chat para contato, Participar de reuniões.  
+Critérios de aceite:
+1) Estagiário acessa o site
+2) Realiza o login
+3) Entra em contato com o Cliente
+4) Participa da reunião com o Arquiteto.
+**Segunda fatia vertical:**
+Inclui: Login simples, criar reunião, lançamento de imagens ao repositório
+Critérios de aceite:
+1) Arquiteto acessa o site
+2) Realiza o login
+3) Cria uma reunião
+4) Lança trabalhos e projetos do repositório
 
----
+## 7) Esboços de algumas telas (wireframes)
+<!-- Vale desenho no papel (foto), Figma, Excalidraw, etc. Não precisa ser bonito, precisa ser claro.
+     EXEMPLO de telas:
+     • Login
+     • Lista de chamados (ordem + tempo desde criação)
+     • Novo chamado (formulário simples)
+     • Painel do professor (atender/encerrar)
+     EXEMPLO de imagem:
+     ![Wireframe - Lista de chamados](img/wf-lista-chamados.png) -->
+[Links ou imagens dos seus rascunhos de telas aqui]
 
-## Problema e objetivo
+## 8) Tecnologias
+- JavaScript: p/ o front-end e back-end (Express)
+- No Navegador: HTML + CSS + JS + Bootstrap
 
-Em aulas práticas, alunos aguardam atendimento sem visibilidade da ordem e do tempo de espera. O objetivo é reduzir frustração e tornar o processo justo.
+### 8.1 Navegador
+**Navegador:** HTML/CSS/JS/Bootstrap  
+**Armazenamento local (se usar):**
+**Hospedagem:** Github Pages e acprojeto.com.br
 
----
+### 8.2 Front-end (servidor de aplicação, se existir)
+**Front-end (servidor):** React 
+**Hospedagem:** Github Pages
 
-## Quem usa
+### 8.3 Back-end (API/servidor, se existir)
+**Back-end (API):** JavaScript com Express
+**Banco de dados:** MySQL ou Postgres
+**Deploy do back-end:** Estudar onde fazer
 
-* **Alunos**: abrir, editar e encerrar seus chamados.
-* **Professores**: visualizar e encerrar quaisquer chamados.
-* **Visitantes**: criar conta e fazer login.
+## 9) Plano de Dados (Dia 0) — somente itens 1–3
+<!-- Defina só o essencial para criar o banco depois. -->
 
----
+### 9.1 Entidades
+- [Usuário] — [pessoa que usa o sistema (cliente, arquiteto, estagiário)]
+- [Chat] — [chat de conversa entre cliente e estagiario]
+- [Reunião] — [reunião criada pelo arquiteto]
+- [Repositório] — [repositório de trabalhos do arquiteto]
 
-## Funcionalidades (MVP)
+### 9.2 Campos por entidade
 
-* Autenticação simples (email/senha) — roles: aluno/professor
-* Criar chamado (texto, imagem opcional)
-* Listar chamados ordenados por data de criação
-* Encerrar chamado (marcar como fechado)
+### Usuario
+| Campo           | Tipo                             | Obrigatório | Exemplo            |
+|-----------------|----------------------------------|-------------|--------------------|
+| id              | número                           | sim         | 1                  |
+| nome            | texto                            | sim         | "Anderson"         |
+| email           | texto                            | sim (único) | "estag@ac.com"     |
+| senha_hash      | texto                            | sim         | "senhaex..."       |
+| papel           | número (0=cliente, 1=estagiario) | sim         | 1                  |
+| dataCriacao     | data/hora                        | sim         | 2025-08-20 14:30   |
+| dataAtualizacao | data/hora                        | sim         | 2025-08-20 15:10   |
 
-Critérios de aceite: logar no sistema como aluno → criar chamado → chamado aparece com horário → logar no sistema como professor → encerrar chamado → o estado do chamado é alterado e pode sumir da lista conforme filtro aplicado.
+### Chat
+| Campo           | Tipo               | Obrigatório | Exemplo                 |
+|-----------------|--------------------|-------------|-------------------------|
+| id              | número             | sim         | 2                       |
+| Chat_id         | int (fk)           | sim         | 8f3a-...                |
+| erro            | texto              | sim         | "Erro ao compilar"      |
+| texto           | texto              | sim         | 'boa tarde'             |
+| dataInicio      | data/hora          | sim         | 2025-08-20 14:35        |
+| dataFim         | data/hora          | sim         | 2025-08-20 15:50        |
 
----
+### Reunião
+| Campo           | Tipo               | Obrigatório | Exemplo                 |
+|-----------------|--------------------|-------------|-------------------------|
+| id              | número             | sim         | 2                       |
+| Reuniao_id      | char (fk)          | sim         | 8f3a-...                |
+| erro            | texto              | sim         | "Erro ao compilar"      |
+| dataCriacao     | data/hora          | sim         | 2025-08-20 17:30        |
+| dataFim         | data/hora          | sim         | 2025-08-20 18:40        |
 
-## Tecnologias
+### Repositório
+| Campo           | Tipo               | Obrigatório | Exemplo                 |
+|-----------------|--------------------|-------------|-------------------------|
+| id              | número             | sim         | 2                       |
+| Repositorio_id  | char (fk)          | sim         | 8f3a-...                |
+| erro            | texto              | sim         | "Erro ao compilar"      |
+| nome            | texto              | sim         | "exemplo.png"           |
+| dataCriacao     | data/hora          | sim         | 2025-08-20 13:55        |
 
-* **Back-end**: Node.js + Express
-* **Banco (opcional)**: PostgreSQL (SQL já provisto para "Dia 0")
-* **Front**: React.js
+### 9.3 Relações entre entidades
+- Um Usuario tem muitos Repositórios. (1→N)
+- Um Chat pertence a um Usuário. (N→1)
+- Uma Reunião tem muitos Usuários. (N→1)
+- Um Usuário tem muitos Chats. (1→N)
 
----
+### 9.4 Modelagem do Banco de Dados
 
-## Modelo de dados
-
-Resumo: `Usuarios` (id, nome, email, senha_hash, papel, timestamps) e `Chamados` (id, Usuarios_id, texto, estado, url_imagem, timestamps).
-
-``` SQL
-SET client_encoding = 'UTF8';
-
-CREATE TABLE IF NOT EXISTS "Usuarios" (
-    "id"                SERIAL        PRIMARY KEY,
-    "nome"              VARCHAR(255)  NOT NULL,
-    "email"             VARCHAR(255)  NOT NULL UNIQUE,
-    "senha_hash"        VARCHAR(255)  NOT NULL,
-    "papel"             SMALLINT      NOT NULL CHECK ("papel" IN (0,1)),
-    "data_criacao"      TIMESTAMP     NOT NULL DEFAULT now(),
-    "data_atualizacao"  TIMESTAMP     NOT NULL DEFAULT now()
+~~~
+CREATE TABLE usuarios (
+    id SERIAL PRIMARY KEY,
+    nome TEXT NOT NULL,
+    email TEXT NOT NULL UNIQUE,
+    senha_hash TEXT NOT NULL,
+    papel SMALLINT NOT NULL CHECK (papel IN (0, 1)), -- 0=cliente, 1=estagiario
+    data_criacao TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    data_atualizacao TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS "Chamados" (
-    "id"                SERIAL        PRIMARY KEY,
-    "Usuarios_id"       INTEGER       NOT NULL REFERENCES "Usuarios"("id"),
-    "texto"             VARCHAR(255)  NOT NULL,
-    "estado"            CHAR(1)       NOT NULL CHECK ("estado" IN ('a','f')),
-    "url_imagem"        VARCHAR(255),
-    "data_criacao"      TIMESTAMP     NOT NULL DEFAULT now(),
-    "data_atualizacao"  TIMESTAMP     NOT NULL DEFAULT now()
+CREATE TABLE chats (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    usuario_id INTEGER NOT NULL REFERENCES usuarios(id),
+    data_inicio TIMESTAMP NOT NULL,
+    data_fim TIMESTAMP NOT NULL
 );
 
-INSERT INTO "Usuarios" ("nome", "email", "senha_hash", "papel") VALUES
-('Usuário',                'user@user.com.br',             '$2b$12$hOa7C35BZpDh7kJYoCld9YbLRMsvIkVzvr3LMBDHT46/Kpx7/aEzW', 0),
-('Admin',                  'admin@admin.com.br',           '$2b$12$uBy.SQ6EAxn/o/clzQHi.ydZM.v4sM78Rnd/DgwpLyGhkQltSy6n0', 1),
-('Alice Silva',            'alice@exemplo.com.br',         '$2b$12$Bnqzpx4w6TaRk8ck5bHtrVmtKV/OmjJ/qWWqBPmKhSZ0aSgKvSOAj', 0),
-('Bruno Lima',             'bruno@exemplo.com.br',         '$2b$12$lsvj7q7QCfCriYUh/UeagGUVtGiYCwMat4J5bnP.u7rb9hjp55rdL', 0),
-('Carla Ferreira',         'carla.ferreira@exemplo.com.br','$2b$12$k7mmguOilastEwMXekVTw3v5Vt/2JGG53GmVocr0i7ZhlkFKrde1M', 1),
-('Diego Santos',           'diego@exemplo.com.br',         '$2b$12$Ru95WQEgzFqBOfyAG34/6Nppels6CUKoe1ma7urinZiZLQbNCZEj9', 0),
-('Eduarda Costa',          'eduarda@exemplo.com.br',       '$2b$12$4NrPZt6yNJEPQO2ApaF04kD7CY.LV9XWRQTBPF6KwSE39YcChbBKF', 0),
-('Felipe Almeida',         'felipe@exemplo.com.br',        '$2b$12$XpRkEBpxXukNijvqNnyy.SQxJ3.olhNnK.1aT.Yl5d2JYp89dGINg', 0),
-('Giselle Rocha',          'giselle@exemplo.com.br',       '$2b$12$VTqKt4ERLTmLRCGrJIfGVOwmGcEir9KDq7G5RWrnYRlBvHfw82jh7', 1),
-('Henrique Martins',       'henrique@exemplo.com.br',      '$2b$12$hzzNU5mPWkgYoHe1RD0uYYTibS8lO/XXI1aVoYjEJ1zAw9lPQOUEJ', 0),
-('Isabela Nunes',          'isabela@exemplo.com',          '$2b$12$GXQT1tXZD46SovxYIt8Gav6stqg/05PleFbmH.J3F2chAuiCVgcfz', 0),
-('Joao Pedro Ramos',       'joao.ramos@exemplo.com.br',    '$2b$12$oXKiRh8ktUFaMTstKX/cCfDUAUT2SepSNwRdWtUenkwz1IwFL6V6b', 0),
-('Karen Oliveira',         'karen@exemplo.com.br',         '$2b$12$9x2GHtGECKzuQCJS65.1klPkri2xpNTvbEZLDlrVsvVBLZp4cnKlc', 0),
-('Luiz Fernando Teixeira', 'luiz.teixeira@exemplo.com.br', '$2b$12$woeItTdOln/h4lP8Dc65k1XqFI5fOlSADwHsQk/T50ES8K9I0dpn4', 1);
+CREATE TABLE mensagens_chat (
+    id SERIAL PRIMARY KEY,
+    chat_id UUID NOT NULL REFERENCES chats(id) ON DELETE CASCADE,
+    erro TEXT NOT NULL,
+    texto TEXT NOT NULL
+);
 
-INSERT INTO "Chamados" ("Usuarios_id", "texto", "estado") VALUES
-(1,  'Preciso de ajuda com JS', 'a'),
-(1,  'Erro ao instalar dependências no npm',          'a'),
-(2,  'Dúvida sobre rotas no Express',                 'f'),
-(3,  'Como organizar a fila por tempo de criação?',   'a'),
-(4,  'Falha ao conectar no banco Postgres',           'a'),
-(5,  'Revisar critérios de encerramento de chamado',  'f'),
-(6,  'Problema com CORS no navegador',                'a'),
-(7,  'Como validar preço >= 0 no backend?',           'a'),
-(8,  'PUT vs PATCH: quando usar cada um?',            'f'),
-(9,  'Padronizar mensagens de erro da API',           'a'),
-(10, 'Timeout ao fazer fetch no front',               'a');
+CREATE TABLE reunioes (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    usuario_id INTEGER NOT NULL REFERENCES usuarios(id),
+    data_criacao TIMESTAMP NOT NULL,
+    data_fim TIMESTAMP NOT NULL
+);
 
-INSERT INTO "Chamados" ("Usuarios_id", "texto", "estado", "url_imagem") VALUES
-(11, 'Layout da lista não carrega no CSS',            'a', '/img/wireframe-lista.png'),
-(12, 'Bug ao atualizar produto (PUT)',                'f', '/img/bug-put.png'),
-(13, 'Imagem não aparece no README',                  'a', '/img/readme-img.png'),
-(14, 'Organização das rotas em /api/produtos',        'a', '/img/rotas.png'),
-(3,  'Ícone quebra em telas pequenas',                'f', '/img/icone-responsivo.png'),
-(4,  'Mensagem de validação pouco clara',             'a', '/img/validacao-msg.png'),
-(5,  'Dúvida sobre COALESCE no SQL',                  'a', '/img/sql-coalesce.png'),
-(6,  'Diferença entre 200 e 201 no retorno',          'f', '/img/http-status.png');
-```
+CREATE TABLE registros_reuniao (
+    id SERIAL PRIMARY KEY,
+    reuniao_id UUID NOT NULL REFERENCES reunioes(id) ON DELETE CASCADE,
+    erro TEXT NOT NULL
+);
 
----
+CREATE TABLE repositorios (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    usuario_id INTEGER NOT NULL REFERENCES usuarios(id),
+    data_criacao TIMESTAMP NOT NULL
+);
 
-## Como rodar localmente
+CREATE TABLE arquivos_repositorio (
+    id SERIAL PRIMARY KEY,
+    repositorio_id UUID NOT NULL REFERENCES repositorios(id) ON DELETE CASCADE,
+    nome TEXT NOT NULL,
+    erro TEXT NOT NULL
+);
 
-**Pré-requisitos**: Node.js (LTS), PostgreSQL instalado.
+INSERT INTO usuarios (nome, email, senha_hash, papel)
+VALUES ('Anderson', 'estag@ac.com', 'senhaex123hash', 1);
 
-1. Clone o repositório
+INSERT INTO chats (usuario_id, data_inicio, data_fim)
+VALUES (
+    1,
+    '2025-08-20 14:35',
+    '2025-08-20 15:50'
+);
 
-```bash
-git clone <seu-repo.git>
-cd node-chamados-backend
-```
+INSERT INTO mensagens_chat (chat_id, erro, texto)
+VALUES (
+    '8f3a0000-0000-0000-0000-000000000001', -- substitua com o UUID real do chat
+    'Erro ao compilar',
+    'Boa tarde'
+);
 
-2. Copie o `.env.example` para `.env` e ajuste as variáveis (ex.: DB_HOST, DB_USER, DB_PASSWORD, PORT).
-```bash
-copy .env.example .env
-```
+INSERT INTO reunioes (id, usuario_id, data_criacao, data_fim)
+VALUES (
+    '8f3a0000-0000-0000-0000-000000000002',
+    1,
+    '2025-08-20 17:30',
+    '2025-08-20 18:40'
+);
 
-3. Instale dependências
+INSERT INTO registros_reuniao (reuniao_id, erro)
+VALUES (
+    '8f3a0000-0000-0000-0000-000000000002',
+    'Erro ao compilar'
+);
 
-```bash
-npm install
-```
+SELECT 
+    u.nome AS usuario,
+    c.id AS chat_id,
+    c.data_inicio,
+    c.data_fim,
+    m.texto,
+    m.erro
+FROM mensagens_chat m
+JOIN chats c ON m.chat_id = c.id
+JOIN usuarios u ON c.usuario_id = u.id
+ORDER BY c.data_inicio;
 
-4. Criar banco e tabelas
-
-```bash
-npm run reset-database
-# ou execute o arquivo SQL: psql -U <user> -d <db> -f ./src/database/banco.sql
-```
-
-5. Rodar em modo desenvolvimento
-
-```bash
-npm run dev
-```
-
-6. Testes rápidos com curl (exemplos abaixo em Endpoints principais).
-
----
-
-## Endpoints principais
-
-> Rota base: `http://localhost:<PORT>/api`
-
-### Usuários
-
-* `POST /api/usuarios` — criar usuário (body: `{ nome, email, senha }`)
-* `POST /api/login` — autenticar (body: `{ email, senha }`) → retorna token/session
-
-### Chamados
-
-* `GET /api/chamados` — listar chamados (query: `?estado=a` para abertos)
-* `GET /api/chamados/:id` — ver chamado
-* `POST /api/chamados` — criar chamado (body: `{ texto, urlImagem? }`)
-* `PUT /api/chamados/:id` — atualizar (substitui)
-* `PATCH /api/chamados/:id` — atualizar parcialmente (ex.: `estado`)
-* `DELETE /api/chamados/:id` — deletar
-
-**Resposta de erro padrão**:
-
-```json
-{ "erro": "mensagem explicando o problema" }
-```
-
----
-
-## Comandos úteis / scripts npm
-
-* `npm run dev` — roda em modo desenvolvimento
-* `npm run reset-database` — cria/zera banco
-
----
-
-## Erros comuns & dicas rápidas
-
-* Conexão com banco → ver arquivo `.env` na raiz do projeto (host/port/user/senha).
-* Arquivo `.env` não existe na raiz do projeto → criar arquivo `.env` na raiz do projeto com base no arquivo `.env.example`
-
----
-
-## Licença
-
-MIT — sinta-se à vontade para usar/estudar o projeto. Modifique conforme necessidade.
+~~~
