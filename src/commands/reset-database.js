@@ -4,28 +4,23 @@ import path from 'path';
 import dotenv from 'dotenv';
 
 dotenv.config();
-
 const {
     DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_DATABASE,
     DB_ADMIN_DATABASE = 'postgres',
     DB_ADMIN_PASSWORD,
     DB_DATABASE_FILE_PATH,
 } = process.env;
-
 const requiredEnvVars = ['DB_HOST', 'DB_PORT', 'DB_USER', 'DB_PASSWORD', 'DB_DATABASE', 'DB_DATABASE_FILE_PATH'];
-
 for (const varName of requiredEnvVars) {
     if (!process.env[varName]) {
         console.error(`❌ Erro: A variável de ambiente ${varName} não está definida.`);
         process.exit(1);
     }
 }
-
 const sqlFilePath = path.resolve(process.cwd(), DB_DATABASE_FILE_PATH);
 const baseConfig = { host: DB_HOST, port: Number(DB_PORT), user: DB_USER };
 const adminConfig = { ...baseConfig, database: DB_ADMIN_DATABASE, password: DB_ADMIN_PASSWORD || DB_PASSWORD };
 const appConfig = { ...baseConfig, database: DB_DATABASE, password: DB_PASSWORD };
-
 async function resetDatabase() {
     const adminClient = new Client(adminConfig);
     try {
@@ -47,7 +42,6 @@ async function resetDatabase() {
         console.log('- Conexão de admin encerrada.');
     }
 }
-
 async function applySchema() {
     let sql;
     try {
@@ -68,7 +62,6 @@ async function applySchema() {
         console.log('- Conexão da aplicação encerrada.');
     }
 }
-
 console.log('--- Iniciando processo de reset do banco de dados ---');
 try {
     await resetDatabase();

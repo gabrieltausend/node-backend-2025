@@ -9,49 +9,28 @@ const router = Router();
 const uploadDir = path.resolve("uploads");
 fs.mkdirSync(uploadDir, { recursive: true });
 const ESTADOS_VALIDOS = new Set(["a", "f"]);
-
-// Função auxiliar para validar e converter o parâmetro de ID da rota
-// Se for um número inteiro > 0, retorna o número; caso contrário, retorna null
 function parseIdParam(param) {
     const id = Number(param);
     return Number.isInteger(id) && id > 0 ? id : null;
 }
-
 function isEstadoValido(estado) {
     return ESTADOS_VALIDOS.has(estado);
 }
-
-// Gera um nome de arquivo "único" usando timestamp + número aleatório e preserva a extensão original
 function gerarNomeArquivo(originalname) {
     const ext = path.extname(originalname).toLowerCase();
     return `${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`;
 }
-
-// Monta URL completa para o arquivo, ex: http://localhost:3000/uploads/arquivo.png
-// Utiliza protocolo + host e o nome do arquivo
 function montarUrlCompleta(req, filename) {
     const baseUrl = `${req.protocol}://${req.get("host")}`;
     return `${baseUrl}/uploads/${filename}`;
 }
-
-// Salva o buffer do arquivo em disco e retorna a URL completa
-// 1) Se não tiver arquivo, retorna null
-// 2) Gera um nome de arquivo, monta o caminho completo no disco, escreve o arquivo
-// 3) Retorna a URL pública para esse arquivo
 async function salvarUploadEmDisco(req, file) {
     if (!file) return null;
-
     const filename = gerarNomeArquivo(file.originalname);
     const filePath = path.join(uploadDir, filename);
-
-    // writeFile escreve o conteúdo do buffer no caminho especificado
     await writeFile(filePath, file.buffer);
-
     return montarUrlCompleta(req, filename);
 }
-
-// Remove arquivo a partir de uma URL ABSOLUTA salva no banco
-// Ex: https://meudominio.com/uploads/arquivo.png
 async function removerArquivoPorUrl(url_imagem) {
     if (!url_imagem) return;
 
@@ -64,12 +43,8 @@ async function removerArquivoPorUrl(url_imagem) {
     } catch {
     }
 }
-
-// Helper para obter auth de forma padronizada
-// Supõe que algum middleware anterior já tenha preenchido req.user
-// Se não tiver user, responde 401 (não autenticado) e retorna null
-// Se tiver, retorna um objeto com uid e se é admin
 function getAuthInfo(req, res) {
+    console.log(req.user)
     const uid = req.user?.id;
     const isAdmin = req.user?.papel === 1;
     if (!uid) {
@@ -78,9 +53,6 @@ function getAuthInfo(req, res) {
     }
     return { uid, isAdmin };
 }
-
-// Helper para carregar um chamado por ID
-// Faz SELECT no banco e retorna o primeiro resultado ou null se não existir
 async function obterChamadoPorId(id) {
     const { rows } = await pool.query(
         `SELECT * FROM "Pedidos" WHERE "id" = $1`,
@@ -88,10 +60,6 @@ async function obterChamadoPorId(id) {
     );
     return rows[0] ?? null;
 }
-
-// Configura o multer para armazenar o upload em MEMÓRIA (buffer) primeiro,
-// ao invés de salvar diretamente em disco. Assim conseguimos validar os dados
-// e só depois salvar o arquivo
 const upload = multer({
     storage: multer.memoryStorage(),
     limits: {
@@ -99,7 +67,6 @@ const upload = multer({
         fileSize: 5 * 1024 * 1024,
     },
 });
-
 router.get("/", async (_req, res) => {
     try {
         const { rows } = await pool.query(
@@ -110,13 +77,11 @@ router.get("/", async (_req, res) => {
         res.status(500).json({ erro: "erro interno" });
     }
 });
-
 router.get("/:id", async (req, res) => {
     const id = parseIdParam(req.params.id);
     if (!id) {
         return res.status(400).json({ erro: "id inválido" });
     }
-
     try {
         const chamado = await obterChamadoPorId(id);
         if (!chamado) return res.status(404).json({ erro: "não encontrado" });
@@ -125,10 +90,6 @@ router.get("/:id", async (req, res) => {
         res.status(500).json({ erro: "erro interno" });
     }
 });
-
-// POST /api/chamados
-// Cria chamado (texto, estado ["a"/"f"], imagem opcional)
-// Salva url_imagem como URL COMPLETA no banco
 router.post("/", upload.single("imagem"), async (req, res) => {
     const auth = getAuthInfo(req, res);
     if (!auth) return;
@@ -137,28 +98,23 @@ router.post("/", upload.single("imagem"), async (req, res) => {
     const est = estado ?? "a";
     const temTextoValido = typeof texto === "string" && texto.trim() !== "";
     const temEstadoValido = isEstadoValido(est);
-
     if (!temTextoValido || !temEstadoValido) {
          return res.status(400).json({
             erro:
                 "Campos obrigatórios: texto (string não vazia) e estado ('a' ou 'f' — se ausente, assume 'a')",
         });
     }
-
     let urlImagem = null;
-
     try {
         if (req.file) {
             urlImagem = await salvarUploadEmDisco(req, req.file);
         }
-
         const { rows } = await pool.query(
             `INSERT INTO "Pedidos" ("Usuarios_id", "texto", "estado", "url_imagem")
              VALUES ($1, $2, $3, $4)
              RETURNING *`,
             [uid, texto.trim(), est, urlImagem]
         );
-
         res.status(201).json(rows[0]);
     } catch {
         if (urlImagem) {
@@ -167,39 +123,26 @@ router.post("/", upload.single("imagem"), async (req, res) => {
         res.status(500).json({ erro: "erro interno" });
     }
 });
-
-// PUT /api/chamados/:id
-// Atualização COMPLETA (texto, estado, imagem opcional)
-// Regras:
-//  - Se vier imagem nova → salva nova, faz UPDATE, depois remove a antiga
-//  - Se não vier imagem → zera url_imagem e remove a antiga (se existir)
 router.put("/:id", upload.single("imagem"), async (req, res) => {
     const id = parseIdParam(req.params.id);
     if (!id) {
         return res.status(400).json({ erro: "id inválido" });
     }
-
     const auth = getAuthInfo(req, res);
     if (!auth) return;
     const { uid, isAdmin } = auth;
     const { texto, estado } = req.body ?? {};
     const temTextoValido = typeof texto === "string" && texto.trim() !== "";
     const temEstadoValido = isEstadoValido(estado);
-
     if (!temTextoValido || !temEstadoValido) {
         return res.status(400).json({
             erro:
                 "Para PUT, envie texto (string não vazia) e estado ('a' | 'f'); imagem é opcional.",
         });
     }
-
     let urlImagemNova = null;
     let urlImagemAntiga = null;
-
     try {
-        // 1) Busca chamado e valida permissão:
-        //    - Se não existir → 404
-        //    - Se não for admin e não for o dono → também 404 (não revelamos que existe)
         const chamado = await obterChamadoPorId(id);
         if (!chamado) {
             return res.status(404).json({ erro: "não encontrado" });
@@ -207,19 +150,12 @@ router.put("/:id", upload.single("imagem"), async (req, res) => {
         if (!isAdmin && chamado.Usuarios_id !== uid) {
             return res.status(404).json({ erro: "não encontrado" });
         }
-
         urlImagemAntiga = chamado.url_imagem;
-
-        // 2) Decide nova URL da imagem:
-        //    - Se veio arquivo → salva nova imagem e usa a nova URL
-        //    - Se NÃO veio arquivo → mantém a imagem antiga
         if (req.file) {
             urlImagemNova = await salvarUploadEmDisco(req, req.file);
         } else {
             urlImagemNova = urlImagemAntiga;
         }
-
-        // 3) Atualiza texto, estado e url_imagem
         const { rows } = await pool.query(
             `UPDATE "Pedidos"
              SET "texto"            = $1,
@@ -230,17 +166,12 @@ router.put("/:id", upload.single("imagem"), async (req, res) => {
              RETURNING *`,
             [texto.trim(), estado, urlImagemNova, id]
         );
-
         if (!rows[0]) {
-            // Caso raro: o registro foi apagado entre o SELECT e o UPDATE
-            // Nesse caso, se salvamos uma nova imagem, precisamos removê-la
             if (req.file && urlImagemNova) {
                 await removerArquivoPorUrl(urlImagemNova);
             }
             return res.status(404).json({ erro: "não encontrado" });
         }
-
-        // 4) Caso tenha troca de imagem, remove a antiga
         if (
             req.file &&
             urlImagemAntiga &&
@@ -248,7 +179,6 @@ router.put("/:id", upload.single("imagem"), async (req, res) => {
         ) {
             await removerArquivoPorUrl(urlImagemAntiga);
         }
-
         res.json(rows[0]);
     } catch {
         if (req.file && urlImagemNova) {
@@ -257,19 +187,11 @@ router.put("/:id", upload.single("imagem"), async (req, res) => {
         res.status(500).json({ erro: "erro interno" });
     }
 });
-
-// PATCH /api/chamados/:id
-// Atualização PARCIAL (texto, estado e/ou imagem).
-// Regras para imagem:
-//  - Se enviar um arquivo novo → salva nova, faz UPDATE, depois remove a antiga.
-//  - Se enviar url_imagem = null (JSON) → seta url_imagem = null e apaga a antiga.
-//  - Se não enviar nada relativo à imagem → mantém imagem atual.
 router.patch("/:id", upload.single("imagem"), async (req, res) => {
     const id = parseIdParam(req.params.id);
     if (!id) {
         return res.status(400).json({ erro: "id inválido" });
     }
-
     const auth = getAuthInfo(req, res);
     if (!auth) return;
     const { uid, isAdmin } = auth;
@@ -279,13 +201,11 @@ router.patch("/:id", upload.single("imagem"), async (req, res) => {
     const querAtualizarEstado = estado !== undefined;
     const querAtualizarImagem =
         !!req.file || url_imagem === null;
-
     if (!querAtualizarTexto && !querAtualizarEstado && !querAtualizarImagem) {
         return res
             .status(400)
             .json({ erro: "envie ao menos um campo para atualizar" });
     }
-
     let novoTexto = undefined;
     if (querAtualizarTexto) {
         if (typeof texto !== "string" || texto.trim() === "") {
@@ -295,7 +215,6 @@ router.patch("/:id", upload.single("imagem"), async (req, res) => {
         }
         novoTexto = texto.trim();
     }
-
     let novoEstado = undefined;
     if (querAtualizarEstado) {
         if (!isEstadoValido(estado)) {
@@ -303,18 +222,15 @@ router.patch("/:id", upload.single("imagem"), async (req, res) => {
         }
         novoEstado = estado;
     }
-
     if (url_imagem !== undefined && url_imagem !== null) {
         return res.status(400).json({
             erro:
                 "Para alterar imagem via PATCH, envie um arquivo em 'imagem' ou url_imagem = null para remover.",
         });
     }
-
     let urlImagemAntiga = null;
     let urlImagemNova = null;
     let criouNovaImagem = false;
-
     try {
         const chamado = await obterChamadoPorId(id);
         if (!chamado) {
@@ -323,13 +239,7 @@ router.patch("/:id", upload.single("imagem"), async (req, res) => {
         if (!isAdmin && chamado.Usuarios_id !== uid) {
             return res.status(404).json({ erro: "não encontrado" });
         }
-
         urlImagemAntiga = chamado.url_imagem;
-
-        // Decide a nova URL da imagem de acordo com o que foi enviado:
-        // - Se veio um arquivo → salva e usa nova URL.
-        // - Se url_imagem === null → remove imagem.
-        // - Senão → mantém a imagem atual.
         if (req.file) {
             urlImagemNova = await salvarUploadEmDisco(req, req.file);
             criouNovaImagem = true;
@@ -338,7 +248,6 @@ router.patch("/:id", upload.single("imagem"), async (req, res) => {
         } else {
             urlImagemNova = urlImagemAntiga;
         }
-
         const textoFinal = novoTexto !== undefined ? novoTexto : chamado.texto;
         const estadoFinal =
             novoEstado !== undefined ? novoEstado : chamado.estado;
@@ -352,7 +261,6 @@ router.patch("/:id", upload.single("imagem"), async (req, res) => {
              RETURNING *`,
             [textoFinal, estadoFinal, urlImagemNova, id]
         );
-
         if (!rows[0]) {
             if (criouNovaImagem && urlImagemNova) {
                 await removerArquivoPorUrl(urlImagemNova);
@@ -362,7 +270,6 @@ router.patch("/:id", upload.single("imagem"), async (req, res) => {
         if (urlImagemAntiga && urlImagemAntiga !== urlImagemNova) {
             await removerArquivoPorUrl(urlImagemAntiga);
         }
-
         res.json(rows[0]);
     } catch {
         if (criouNovaImagem && urlImagemNova) {
@@ -371,23 +278,15 @@ router.patch("/:id", upload.single("imagem"), async (req, res) => {
         res.status(500).json({ erro: "erro interno" });
     }
 });
-
-// DELETE /api/chamados/:id
-// Apaga o chamado e, se tiver url_imagem, tenta apagar o arquivo de disco também.
 router.delete("/:id", async (req, res) => {
     const id = parseIdParam(req.params.id);
     if (!id) {
         return res.status(400).json({ erro: "id inválido" });
     }
-
     const auth = getAuthInfo(req, res);
     if (!auth) return;
     const { uid, isAdmin } = auth;
-
     try {
-        // Antes de apagar, buscamos o chamado para verificar:
-        // - se existe
-        // - se o usuário tem permissão (dono ou admin)
         const chamado = await obterChamadoPorId(id);
         if (!chamado) {
             return res.status(404).json({ erro: "não encontrado" });
@@ -401,11 +300,9 @@ router.delete("/:id", async (req, res) => {
         if (chamado.url_imagem) {
             await removerArquivoPorUrl(chamado.url_imagem);
         }
-
         res.status(204).end();
     } catch {
         res.status(500).json({ erro: "erro interno" });
     }
 });
-
 export default router;

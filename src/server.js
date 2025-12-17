@@ -2,35 +2,26 @@ import express from "express";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import dotenv from "dotenv";
-import usuariosRouter from "./routes/usuarios.routes.js"; // Certifique-se de que o caminho está correto
+import usuariosRouter from "./routes/usuarios.routes.js";
+import chamadosRouter from "./routes/chamados.routes.js";
+import { authMiddleware } from "./middlewares/auth.js";
 
-// Carrega as variáveis de ambiente (como PORT) do arquivo .env
 dotenv.config();
-
+console.log("PORT:", process.env.PORT);
+console.log("NODE_ENV:", process.env.NODE_ENV);
 const app = express();
-
-// CORS OBRIGATÓRIO
 app.use(cors({
-    origin: "http://localhost:5173",   // A PORTA DO SEU FRONT!
+    origin: "http://localhost:5173",
     credentials: true
 }));
-
 app.use(express.json());
 app.use(cookieParser());
-
-// ROTA DE TESTE (Adicionada para evitar o erro "Cannot GET /" na rota raiz)
-// Quando o usuário acessa http://localhost:3000, esta rota responde.
 app.get("/", (req, res) => {
-    res.status(200).send({
-        status: "OK",
-        message: "Backend está rodando com sucesso! Acesse /api/usuarios para interagir com as rotas de usuário."
-    });
+    res.send("API funcionando 🚀");
 });
-
-// ROTAS PRINCIPAIS
 app.use("/api/usuarios", usuariosRouter);
-
-// Configuração e inicialização do servidor
+app.use("/api/chamados", authMiddleware, chamadosRouter);
 const PORT = process.env.PORT || 3000;
-
-app.listen(PORT, () => console.log(`Backend rodando na porta ${PORT}`));
+app.listen(PORT, () => {
+    console.log(`Backend rodando na porta ${PORT}`);
+});
